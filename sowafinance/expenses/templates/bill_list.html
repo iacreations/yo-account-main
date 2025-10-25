@@ -1,0 +1,40 @@
+{% load static %}
+{% include 'includes/navbar.html' %}
+{% include 'includes/sidebar.html' %}
+
+<div class="page" style="padding:20px;">
+  <h2 style="color:#39B54B;margin-bottom:12px;">Bills</h2>
+  <p><a href="{% url 'expenses:bill-add' %}" class="btn btn-green" style="background:#39B54B;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;">+ New Bill</a></p>
+
+  <div style="overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;">
+    <table style="width:100%;border-collapse:collapse;min-width:900px;">
+      <thead>
+        <tr style="background:#f8fafc">
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">Date</th>
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">No.</th>
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">Supplier</th>
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">Total</th>
+          <th style="padding:10px;border-bottom:1px solid #e5e7eb;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in bills %}
+          <tr>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ b.bill_date|date:"d/m/Y" }}</td>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ b.bill_no }}</td>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ b.payee_display }}</td>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;">Ush{{ b.total_amount|floatformat:0 }}</td>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;">
+              <a href="{% url 'expenses:bill-detail' b.id %}" style="color:#39B54B;font-weight:700;text-decoration:none;">View</a> &nbsp;|&nbsp;
+              <a href="{% url 'expenses:bill-edit' b.id %}" style="color:#39B54B;font-weight:700;text-decoration:none;">Edit</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" style="text-align:center;color:#6b7280;padding:16px;">No bills yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'includes/footer.html' %}

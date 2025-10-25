@@ -1,0 +1,67 @@
+{% load static %}
+{% load humanize %}
+{% include 'includes/navbar.html' %}
+{% include 'includes/sidebar.html' %}
+
+<div class="page" style="padding:20px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <h2 style="color:#39B54B;">Bill {{ bill.bill_no }}</h2>
+    <div>
+      <a href="{% url 'expenses:bill-edit' bill.id %}" style="color:#39B54B;font-weight:700;text-decoration:none;margin-right:14px;">Edit</a>
+      <a href="{% url 'expenses:bill-list' %}" style="color:#39B54B;font-weight:700;text-decoration:none;">Back to list</a>
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:18px;">
+    <div style="background:#f6fff8;padding:10px 12px;border-bottom:1px solid #e5e7eb;font-weight:700;color:#165b27;">Header</div>
+    <table style="width:100%;border-collapse:collapse;">
+      <tr><th style="text-align:left;padding:10px;border-bottom:1px solid #f1f5f9;">Supplier</th><td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ bill.payee_display }}</td></tr>
+      <tr><th style="text-align:left;padding:10px;border-bottom:1px solid #f1f5f9;">Bill Date</th><td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ bill.bill_date|date:"M d, Y" }}</td></tr>
+      <tr><th style="text-align:left;padding:10px;border-bottom:1px solid #f1f5f9;">Due Date</th><td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ bill.due_date|date:"M d, Y" }}</td></tr>
+      <tr><th style="text-align:left;padding:10px;border-bottom:1px solid #f1f5f9;">Terms</th><td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ bill.terms }}</td></tr>
+      <tr><th style="text-align:left;padding:10px;border-bottom:1px solid #f1f5f9;">Total</th><td style="padding:10px;border-bottom:1px solid #f1f5f9;"><b>Ush{{ bill.total_amount|floatformat:0|intcomma }}</b></td></tr>
+      <tr><th style="text-align:left;padding:10px;border-bottom:1px solid #f1f5f9;">Memo</th><td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ bill.memo|default:"—" }}</td></tr>
+      {% if bill.attachment %}<tr><th style="text-align:left;padding:10px;">Attachment</th><td style="padding:10px;"><a href="{{ bill.attachment.url }}" target="_blank">Download</a></td></tr>{% endif %}
+    </table>
+  </div>
+
+  {% if bill.category_lines.exists %}
+  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:18px;">
+    <div style="background:#f6fff8;padding:10px 12px;border-bottom:1px solid #e5e7eb;font-weight:700;color:#165b27;">Category lines</div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:#fafafa"><th style="text-align:left;padding:10px;">Account</th><th style="text-align:left;padding:10px;">Description</th><th style="text-align:right;padding:10px;">Amount</th></tr></thead>
+      <tbody>
+        {% for ln in bill.category_lines.all %}
+          <tr>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ ln.account.account_name }}</td>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ ln.description|default:"—" }}</td>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;text-align:right;">Ush{{ ln.amount|floatformat:0|intcomma }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if bill.item_lines.exists %}
+  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+    <div style="background:#f6fff8;padding:10px 12px;border-bottom:1px solid #e5e7eb;font-weight:700;color:#165b27;">Item lines</div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:#fafafa"><th style="text-align:left;padding:10px;">Product</th><th style="text-align:left;padding:10px;">Description</th><th style="text-align:right;padding:10px;">Qty</th><th style="text-align:right;padding:10px;">Rate</th><th style="text-align:right;padding:10px;">Amount</th></tr></thead>
+      <tbody>
+        {% for il in bill.item_lines.all %}
+          <tr>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ il.product.name|default:"—" }}</td>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;">{{ il.description|default:"—" }}</td>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;text-align:right;">{{ il.qty|floatformat:2 }}</td>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;text-align:right;">Ush{{ il.rate|floatformat:2|intcomma }}</td>
+            <td style="padding:10px;border-bottom:1px solid #f1f5f9;text-align:right;"><b>Ush{{ il.amount|floatformat:2|intcomma }}</b></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+{% include 'includes/footer.html' %}
