@@ -17,7 +17,7 @@ urlpatterns = [
     path('expenses/add/time-activity', views.add_time_activity, name='time-activity'),
 
     # bill urls
-    path('bills/new/', views.bill_create, name='bill-create'),
+    path('bills/add-bill', views.add_bill, name='add-bill'),
 
 
 # end

@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Bill Form</title>
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet"/>
+  <link rel="icon" type="image/x-icon" href="{% static 'sowaf/images/favicon.ico' %}">
+  <link rel="icon" type="image/x-icon" href="{% static 'sowaf/images/favicon.ico' %}">
+  <!-- Keep your styles exactly as you had them -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Poppins", sans-serif; font-size: 14px; }
     body { background: #f4f6f8; padding: 30px; }
@@ -31,177 +35,314 @@
     .footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-top: 30px; border-top: 1px solid #e0e0e0; padding-top: 20px; gap: 10px; }
     .btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
     .btn-cancel { background: #f5f5f5; color: #333; }
-    .btn-light-green { background: #d2f4dc; color: #2a8b3f; }
-    .btn-light-green:hover { background: #c3eecf; }
     .dropdown { position: relative; display: inline-block; }
     .dropdown .btn-green { background: #39B54B; color: #fff; }
     .dropdown-menu { display: none; position: absolute; right: 0; background: #fff; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 100; width: 160px; }
     .dropdown-menu button { width: 100%; padding: 10px 16px; background: none; border: none; text-align: left; cursor: pointer; white-space: nowrap; }
-    .dropdown:hover .dropdown-menu { display: block; }
-    .totals { font-weight: bold; text-align: right; padding: 10px; }
+    .totals { font-weight: bold; text-align: right; padding: 10px; display: block; }
   </style>
 </head>
 <body>
-  <div class="container" id="billForm">
-    <h2 class="title">Bill Form</h2>
-    <div class="section-wrapper">
-      <div class="form-grid">
-        <div class="form-group"><label>Supplier</label><select><option>Supplier A</option><option>Supplier B</option><option>Supplier C</option></select></div>
-        <div class="form-group"><label>Mailing Address</label><input type="text" /></div>
-        <div class="form-group"><label>Terms</label><select><option>Net 7</option><option>Net 15</option><option>Net 30</option></select></div>
-        <div class="form-group"><label>Bill Date</label><input type="date" /></div>
-        <div class="form-group"><label>Due Date</label><input type="date" /></div>
-        <div class="form-group"><label>Bill No.</label><input type="text" /></div>
-        <div class="form-group"><label>Location</label><select><option>HQ</option><option>Branch A</option><option>Branch B</option></select></div>
-      </div>
-    </div>
+  <form method="POST" action="{% url 'expenses:add-bill' %}" enctype="multipart/form-data">
+    {% csrf_token %}
 
-    <div class="section-wrapper">
-      <button class="collapsible">Category Details</button>
-      <div class="content">
-        <div class="table-responsive">
-          <table id="categoryTable">
-            <thead>
-              <tr><th>#</th><th>Category</th><th>Description</th><th>Amount</th><th>Billable</th><th>Customer / Project</th><th>Class</th><th>Operations</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="actions">
-          <button class="btn-light-green" onclick="addCategoryRow()">Add Line</button>
-          <button class="btn-light-green" onclick="clearCategoryTable()">Clear All</button>
-        </div>
-      </div>
-    </div>
+    <div class="container" id="billForm">
+      <h2 class="title">Bill Form</h2>
 
-    <div class="section-wrapper">
-      <button class="collapsible">Item Details</button>
-      <div class="content">
-        <div class="table-responsive">
-          <table id="itemTable">
-            <thead>
-              <tr><th>#</th><th>Product / Service</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Billable</th><th>Customer / Project</th><th>Class</th><th>Operations</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="actions">
-          <button class="btn-light-green" onclick="addItemRow()">Add Line</button>
-          <button class="btn-light-green" onclick="clearItemTable()">Clear All</button>
-        </div>
-      </div>
-    </div>
+      <!-- Header -->
+      <div class="section-wrapper">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Supplier</label>
+            <!-- Prefer selecting supplier by id -->
+            <select name="supplier_id" id="supplierSelect">
+              <option value="">-- Select supplier --</option>
+              {% for s in suppliers %}
+                <option value="{{ s.id }}">{{ s.company_name }}</option>
+              {% endfor %}
+              <option value="__manual__">-- Type manually --</option>
+            </select>
+          </div>
 
-    <div class="totals" id="totalAmount">Total: UGX 0.00</div>
+          <div class="form-group">
+            <label>Mailing Address</label>
+            <input type="text" name="mailing_address" />
+          </div>
 
-    <div class="form-group" style="margin-bottom: 30px;">
-      <label>Memo</label>
-      <textarea rows="3" style="width:100%"></textarea>
-    </div>
+          <div class="form-group">
+            <label>Terms</label>
+            <input type="text" name="terms" />
+          </div>
 
-    <div class="attachments">
-      <input type="file" multiple />
-      <i class='bx bx-upload' style="font-size: 30px;"></i>
-      <p>Drag/Drop files here or click to upload (Max size: 20MB)</p>
-    </div>
+          <div class="form-group">
+            <label>Bill Date</label>
+            <input type="date" name="bill_date" />
+          </div>
 
-    <div class="footer">
-      <a href="./Expenses.html"><button class="btn btn-cancel">Cancel</button></a>
-      <button class="btn btn-light-green" onclick="window.print()">Print / Preview</button>
-      <div class="dropdown">
-        <button class="btn btn-green">Save ▼</button>
-        <div class="dropdown-menu">
-          <button>Save</button>
-          <button>Save & New</button>
-          <button>Save & Close</button>
+          <div class="form-group">
+            <label>Due Date</label>
+            <input type="date" name="due_date" />
+          </div>
+
+          <div class="form-group">
+            <label>Bill No.</label>
+            <input type="text" name="bill_no" value="{{ generated_bill_no }}" />
+          </div>
+
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" name="location" />
+          </div>
+
+          <!-- Only shown when user picks "Type manually" -->
+          <div class="form-group" id="manualSupplierBox" style="display:none;">
+            <label>Supplier (manual)</label>
+            <input type="text" name="supplier" placeholder="Enter supplier name" />
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 
+      <!-- Category Details -->
+      <div class="section-wrapper">
+        <button type="button" class="collapsible">Category Details</button>
+        <div class="content">
+          <div class="table-responsive">
+            <table id="categoryTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Billable</th>
+                  <th>Customer / Project</th>
+                  <th>Class</th>
+                  <th>Operations</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn-light-green" onclick="addCategoryRow()">Add Line</button>
+            <button type="button" class="btn-light-green" onclick="clearCategoryTable()">Clear All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item Details -->
+      <div class="section-wrapper">
+        <button type="button" class="collapsible">Item Details</button>
+        <div class="content">
+          <div class="table-responsive">
+            <table id="itemTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Product / Service</th>
+                  <th>Description</th>
+                  <th>Qty</th>
+                  <th>Rate</th>
+                  <th>Amount</th>
+                  <th>Billable</th>
+                  <th>Customer / Project</th>
+                  <th>Class</th>
+                  <th>Operations</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn-light-green" onclick="addItemRow()">Add Line</button>
+            <button type="button" class="btn-light-green" onclick="clearItemTable()">Clear All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Totals -->
+      <span class="totals" id="totalAmount">Total: UGX 0.00</span>
+
+      <!-- Memo -->
+      <div class="form-group" style="margin-bottom: 30px;">
+        <label>Memo</label>
+        <textarea rows="3" name="memo" style="width:100%"></textarea>
+      </div>
+
+      <!-- Attachments -->
+      <div class="attachments">
+        <input type="file" name="attachments" multiple />
+        <i class='bx bx-upload' style="font-size: 30px;"></i>
+        <p>Drag/Drop files here or click to upload (Max size: 20MB)</p>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <a href="{% url 'expenses:expenses' %}"><button type="button" class="btn btn-cancel">Cancel</button></a>
+        <button type="button" class="btn btn-light-green" onclick="window.print()">Print / Preview</button>
+        <div class="dropdown">
+          <button type="button" class="btn btn-green" onclick="toggleSaveMenu()">Save ▼</button>
+          <div class="dropdown-menu" id="saveMenu">
+            <button type="submit" name="save_action" value="save">Save</button>
+            <button type="submit" name="save_action" value="save&new">Save & New</button>
+            <button type="submit" name="save_action" value="save&close">Save & Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Inline JS (kept minimal; no style changes) -->
   <script>
+    // Collapsible panels
     document.querySelectorAll(".collapsible").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const content = btn.nextElementSibling;
-        content.classList.toggle("active");
-      });
+      btn.addEventListener("click", () => btn.nextElementSibling.classList.toggle("active"));
     });
 
+    // Supplier manual toggle
+    const supplierSelect = document.getElementById("supplierSelect");
+    const manualSupplierBox = document.getElementById("manualSupplierBox");
+    supplierSelect.addEventListener("change", () => {
+      manualSupplierBox.style.display = (supplierSelect.value === "__manual__") ? "block" : "none";
+    });
+
+    // Save menu toggle
+    function toggleSaveMenu(){
+      const m = document.getElementById("saveMenu");
+      m.style.display = (m.style.display === "block" ? "none" : "block");
+    }
+    window.addEventListener("click", (e) => {
+      if (!e.target.closest(".dropdown")) {
+        const m = document.getElementById("saveMenu");
+        if (m) m.style.display = "none";
+      }
+    });
+
+    // Template options (server-rendered into JS-friendly strings)
+    const accountOptions = `{% for a in expense_accounts %}<option value="{{ a.id }}">{{ a.account_name }}</option>{% endfor %}`;
+    const productOptions = `{% for p in products %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}`;
+    const customerOptions = `<option value=""></option>{% for c in customers %}<option value="{{ c.id }}">{{ c.customer_name }}</option>{% endfor %}`;
+    const classOptions = `<option value=""></option>{% for cl in classes %}<option value="{{ cl.id }}">{{ cl.class_name }}</option>{% endfor %}`;
+
+    // Totals
     const totalDisplay = document.getElementById("totalAmount");
-
-    function addCategoryRow() {
-      const table = document.querySelector("#categoryTable tbody");
-      const row = table.insertRow();
-      row.innerHTML = `<td></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="number" oninput="updateTotal()" /></td><td><input type="checkbox" /></td><td><input type="text" /></td><td><input type="text" /></td><td><button class="delete-btn" onclick="deleteRow(this)"><i class='bx bx-trash'></i></button></td>`;
-      updateRowNumbers(table);
-    }
-
-    function clearCategoryTable() {
-      const table = document.querySelector("#categoryTable tbody");
-      table.innerHTML = "";
-      updateTotal();
-    }
-
-    function addItemRow() {
-      const table = document.querySelector("#itemTable tbody");
-      const row = table.insertRow();
-      row.innerHTML = `<td></td><td><input type="text" /></td><td><input type="text" /></td><td><input type="number" oninput="updateItemAmount(this); updateTotal()" /></td><td><input type="number" oninput="updateItemAmount(this); updateTotal()" /></td><td><input type="number" readonly /></td><td><input type="checkbox" /></td><td><input type="text" /></td><td><input type="text" /></td><td><button class="delete-btn" onclick="deleteRow(this)"><i class='bx bx-trash'></i></button></td>`;
-      updateRowNumbers(table);
-    }
-
-    function clearItemTable() {
-      const table = document.querySelector("#itemTable tbody");
-      table.innerHTML = "";
-      updateTotal();
-    }
-
-    function deleteRow(btn) {
-      const row = btn.closest("tr");
-      const table = row.closest("tbody");
-      row.remove();
-      updateRowNumbers(table);
-      updateTotal();
-    }
-
-    function updateRowNumbers(tbody) {
-      const rows = tbody.querySelectorAll("tr");
-      rows.forEach((row, index) => {
-        row.cells[0].textContent = index + 1;
-      });
-    }
-
-    function updateItemAmount(input) {
-      const row = input.closest("tr");
-      const qty = parseFloat(row.cells[3].querySelector("input").value) || 0;
-      const rate = parseFloat(row.cells[4].querySelector("input").value) || 0;
-      row.cells[5].querySelector("input").value = (qty * rate).toFixed(2);
-    }
-
-    function updateTotal() {
+    function updateTotal(){
       let total = 0;
       document.querySelectorAll("#categoryTable tbody tr").forEach(row => {
-        const amt = parseFloat(row.cells[3].querySelector("input").value) || 0;
-        total += amt;
+        const v = parseFloat(row.querySelector('input[name="cat_amount[]"]').value) || 0;
+        total += v;
       });
       document.querySelectorAll("#itemTable tbody tr").forEach(row => {
-        const amt = parseFloat(row.cells[5].querySelector("input").value) || 0;
-        total += amt;
+        const v = parseFloat(row.querySelector('input[name="item_amount[]"]').value) || 0;
+        total += v;
       });
       totalDisplay.textContent = `Total: UGX ${total.toFixed(2)}`;
     }
 
-    // Update total on load in case values exist
-    window.addEventListener("load", updateTotal);
+    // Row helpers
+    function renumber(tbody, checkboxName){
+      const rows = tbody.querySelectorAll("tr");
+      rows.forEach((row, idx) => {
+        row.querySelector("td.idx").textContent = idx + 1;
+        const billable = row.querySelector(`input[name="${checkboxName}"]`);
+        if (billable) billable.value = String(idx); // we store the row index in the list
+      });
+    }
 
-    // Toggle dropdown
-    const dropdownBtn = document.querySelector(".dropdown > .btn-primary");
-    const dropdownMenu = document.querySelector(".dropdown-menu");
-    dropdownBtn.addEventListener("click", e => {
-      e.preventDefault();
-      dropdownMenu.style.display = dropdownMenu.style.display === "block" ? "none" : "block";
-    });
-    window.addEventListener("click", e => {
-      if (!e.target.closest(".dropdown")) dropdownMenu.style.display = "none";
+    // Category table
+    function addCategoryRow(){
+      const tb = document.querySelector("#categoryTable tbody");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="idx"></td>
+        <td>
+          <select name="cat_category[]">
+            <option value=""></option>${accountOptions}
+          </select>
+        </td>
+        <td><input type="text" name="cat_desc[]"></td>
+        <td><input type="number" step="0.01" name="cat_amount[]" oninput="updateTotal()"></td>
+        <td style="text-align:center;">
+          <input type="checkbox" name="cat_billable[]" value="">
+        </td>
+        <td>
+          <select name="cat_customer[]">${customerOptions}</select>
+        </td>
+        <td>
+          <select name="cat_class[]">${classOptions}</select>
+        </td>
+        <td>
+          <button type="button" class="delete-btn" onclick="deleteRow(this)"><i class='bx bx-trash'></i></button>
+        </td>`;
+      tb.appendChild(tr);
+      renumber(tb, "cat_billable[]");
+      updateTotal();
+    }
+    function clearCategoryTable(){
+      const tb = document.querySelector("#categoryTable tbody");
+      tb.innerHTML = "";
+      updateTotal();
+    }
+
+    // Item table
+    function addItemRow(){
+      const tb = document.querySelector("#itemTable tbody");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="idx"></td>
+        <td>
+          <select name="item_product[]">
+            <option value=""></option>${productOptions}
+          </select>
+        </td>
+        <td><input type="text" name="item_desc[]"></td>
+        <td><input type="number" step="0.01" name="item_qty[]" oninput="recalcItem(this)"></td>
+        <td><input type="number" step="0.01" name="item_rate[]" oninput="recalcItem(this)"></td>
+        <td><input type="number" step="0.01" name="item_amount[]" readonly></td>
+        <td style="text-align:center;">
+          <input type="checkbox" name="item_billable[]" value="">
+        </td>
+        <td>
+          <select name="item_customer[]">${customerOptions}</select>
+        </td>
+        <td>
+          <select name="item_class[]">${classOptions}</select>
+        </td>
+        <td>
+          <button type="button" class="delete-btn" onclick="deleteRow(this)"><i class='bx bx-trash'></i></button>
+        </td>`;
+      tb.appendChild(tr);
+      renumber(tb, "item_billable[]");
+      updateTotal();
+    }
+    function clearItemTable(){
+      const tb = document.querySelector("#itemTable tbody");
+      tb.innerHTML = "";
+      updateTotal();
+    }
+    function recalcItem(el){
+      const row = el.closest("tr");
+      const qty = parseFloat(row.querySelector('input[name="item_qty[]"]').value) || 0;
+      const rate = parseFloat(row.querySelector('input[name="item_rate[]"]').value) || 0;
+      row.querySelector('input[name="item_amount[]"]').value = (qty * rate).toFixed(2);
+      updateTotal();
+    }
+
+    // Delete any row
+    function deleteRow(btn){
+      const row = btn.closest("tr");
+      const tbody = row.parentElement;
+      const name = tbody.closest("table").id === "categoryTable" ? "cat_billable[]":"item_billable[]";
+      row.remove();
+      renumber(tbody, name);
+      updateTotal();
+    }
+
+    // Start with one blank row in each table
+    window.addEventListener("load", () => {
+      addCategoryRow();
+      addItemRow();
+      updateTotal();
     });
   </script>
 </body>

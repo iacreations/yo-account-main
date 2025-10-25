@@ -144,55 +144,51 @@ class ColumnPreference(models.Model):
     
 
 # bills model
+
 class Bill(models.Model):
-    supplier = models.ForeignKey(Newsupplier, on_delete=models.CASCADE, related_name='bills')
-    mailing_address = models.CharField(max_length=255, blank=True)
-    terms = models.CharField(max_length=50, blank=True)
-    bill_date = models.DateField(default=timezone.now)
-    due_date = models.DateField(null=True, blank=True)
-    bill_no = models.CharField(max_length=50, unique=True)
-    location = models.CharField(max_length=100, blank=True)
-    memo = models.TextField(blank=True)
-    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    attachment = models.FileField(upload_to='uploads/bills/', null=True, blank=True)
+    supplier          = models.ForeignKey(Newsupplier, null=True, blank=True, on_delete=models.CASCADE)
+    supplier_name     = models.CharField(max_length=255, blank=True, null=True)  # if user typed a free-text name
+    mailing_address   = models.CharField(max_length=255, blank=True, null=True)
+    terms             = models.CharField(max_length=100, blank=True, null=True)
+    bill_date         = models.DateField(default=timezone.localdate)
+    due_date          = models.DateField(blank=True, null=True)
+    bill_no           = models.CharField(max_length=32, unique=True)  # we’ll auto-generate if missing
+    location          = models.CharField(max_length=255, blank=True, null=True)
+    memo              = models.TextField(blank=True, null=True)
+    attachments       = models.FileField(upload_to="bills/", blank=True, null=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-bill_date', '-created_at']
+    total_amount      = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    created_at        = models.DateTimeField(auto_now_add=True)
+    updated_at        = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'Bill {self.bill_no} - {self.supplier}'
+        who = self.supplier.company_name if self.supplier else (self.supplier_name or "")
+        return f"Bill {self.bill_no} – {who}".strip()
 
 
 class BillCategoryLine(models.Model):
-    bill = models.ForeignKey(Bill, on_delete=models.CASCADE, related_name='category_lines')
-    # account is optional right now since the form uses a text box; we’ll accept blank and improve later
-    account = models.ForeignKey(Account, on_delete=models.CASCADE, null=True, blank=True, related_name='bill_category_lines')
-    account_text = models.CharField(max_length=120, blank=True)  # capture what the user typed
-    description = models.CharField(max_length=255, blank=True)
-    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    billable = models.BooleanField(default=False)
-    customer = models.ForeignKey(Newcustomer, null=True, blank=True, on_delete=models.CASCADE)
-    class_field = models.ForeignKey(Pclass, null=True, blank=True, on_delete=models.CASCADE)
-    order_index = models.PositiveIntegerField(default=0)
+    bill         = models.ForeignKey(Bill, related_name="category_lines", on_delete=models.CASCADE)
+    category     = models.ForeignKey(Account, on_delete=models.CASCADE)
+    description  = models.CharField(max_length=255, blank=True, null=True)
+    amount       = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    is_billable  = models.BooleanField(default=False)
+    customer     = models.ForeignKey(Newcustomer, null=True, blank=True, on_delete=models.CASCADE)
+    class_field  = models.ForeignKey(Pclass, null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'CategoryLine {self.bill.bill_no} #{self.order_index}'
+        return f"{self.category} - {self.amount}"
 
 
 class BillItemLine(models.Model):
-    bill = models.ForeignKey(Bill, on_delete=models.CASCADE, related_name='item_lines')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE,default="1")
-    description = models.CharField(max_length=255, blank=True)
-    qty = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    billable = models.BooleanField(default=False)
-    customer = models.ForeignKey(Newcustomer, null=True, blank=True, on_delete=models.CASCADE)
-    class_field = models.ForeignKey(Pclass, null=True, blank=True, on_delete=models.CASCADE)
-    order_index = models.PositiveIntegerField(default=0)
+    bill         = models.ForeignKey(Bill, related_name="item_lines", on_delete=models.CASCADE)
+    product      = models.ForeignKey(Product, on_delete=models.CASCADE)
+    description  = models.CharField(max_length=255, blank=True, null=True)
+    qty          = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    rate         = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    amount       = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    is_billable  = models.BooleanField(default=False)
+    customer     = models.ForeignKey(Newcustomer, null=True, blank=True, on_delete=models.CASCADE)
+    class_field  = models.ForeignKey(Pclass, null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'ItemLine {self.bill.bill_no} #{self.order_index}'
+        return f"{self.product} x{self.qty} @ {self.rate} = {self.amount}"

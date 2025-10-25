@@ -7,7 +7,7 @@ from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
-from .models import Expense, ExpenseCategoryLine, ExpenseItemLine,ColumnPreference,Bill,BillCategoryLine,BillItemLine
+from .models import Expense, ExpenseCategoryLine, ExpenseItemLine,ColumnPreference,Bill, BillCategoryLine, BillItemLine
 from sowaf.models import Newcustomer, Newsupplier
 from accounts.models import Account,JournalEntry
 from inventory.models import Product,Pclass
@@ -356,28 +356,61 @@ def expense_edit(request, pk: int):
 
 # end
 # bill views
-def bill_create(request):
-    if request.method == 'POST':
-        supplier_id = request.POST.get('supplier')
-        mailing_address = request.POST.get('mailing_address', '').strip()
-        terms = request.POST.get('terms', '').strip()
-        bill_date = request.POST.get('bill_date') or timezone.now().date()
-        due_date = request.POST.get('due_date') or None
-        bill_no = request.POST.get('bill_no', '').strip()
-        location = request.POST.get('location', '').strip()
-        memo = request.POST.get('memo', '').strip()
-        total_amount = Decimal(request.POST.get('total_amount') or '0')
 
-        if not supplier_id:
-            return redirect('expenses:bill-create')
-        if not bill_no:
-            return redirect('expenses:bill-create')
+def _dec(v, default="0.00"):
+    try:
+        return Decimal(str(v if v not in (None, "") else default))
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal(default)
 
-        supplier = Newsupplier.objects.get(pk=supplier_id)
 
-        with transaction.atomic():
-            bill = Bill.objects.create(
+def generate_unique_bill_no(prefix="BILL"):
+    """
+    8-digit numeric suffix (like 00001234) with a prefix for readability. Ensures uniqueness.
+    """
+    base_date = timezone.now().strftime("%y%m")  # e.g., '2510'
+    seed = f"{base_date}0001"
+    suffix = int(seed)
+    while True:
+        candidate = f"{prefix}{suffix:08d}"
+        if not Bill.objects.filter(bill_no=candidate).exists():
+            return candidate
+        suffix += 1
+
+
+def add_bill(request):
+    """
+    Create & save a Bill with category lines and item lines.
+    POST expects list fields with the same naming as Expenses, e.g.:
+      Category rows:
+        cat_category[], cat_desc[], cat_amount[], cat_billable[], cat_customer[], cat_class[]
+      Item rows:
+        item_product[], item_desc[], item_qty[], item_rate[], item_amount[], item_billable[], item_customer[], item_class[]
+    """
+    if request.method == "POST":
+        try:
+            with transaction.atomic():
+                # Header
+                supplier_id      = request.POST.get("supplier_id") or ""   # prefer selecting supplier by id
+                supplier_name    = request.POST.get("supplier") or ""      # fallback free text (your HTML has name="supplier")
+                mailing_address  = request.POST.get("mailing_address") or ""
+                terms            = request.POST.get("terms") or ""
+                bill_date        = request.POST.get("bill_date") or timezone.localdate()
+                due_date         = request.POST.get("due_date") or None
+                bill_no          = request.POST.get("bill_no") or ""
+                location         = request.POST.get("location") or ""
+                memo             = request.POST.get("memo") or ""
+                attachment       = request.FILES.get("attachments")
+
+                supplier = Newsupplier.objects.filter(pk=supplier_id).first() if supplier_id else None
+
+                # Ensure a unique bill_no (auto-generate if missing/invalid)
+                if not bill_no or Bill.objects.filter(bill_no=bill_no).exists():
+                    bill_no = generate_unique_bill_no()
+
+                bill = Bill.objects.create(
                     supplier=supplier,
+                    supplier_name=supplier_name if not supplier else None,
                     mailing_address=mailing_address,
                     terms=terms,
                     bill_date=bill_date,
@@ -385,67 +418,102 @@ def bill_create(request):
                     bill_no=bill_no,
                     location=location,
                     memo=memo,
-                    total_amount=total_amount,
-                    attachment=request.FILES.get('attachment')
+                    attachments=attachment,
                 )
 
-                # Category lines
-            cat_json = request.POST.get('category_rows_json') or '[]'
-            cat_rows = json.loads(cat_json)
-            for i, row in enumerate(cat_rows, start=1):
-                account_obj = None
-                account_val = (row.get('category') or '').strip()
-                if account_val.isdigit():
-                    account_obj = Account.objects.filter(id=int(account_val)).first()
+                total = Decimal("0.00")
+
+                # -------- Category lines --------
+                cat_category_ids = request.POST.getlist("cat_category[]")
+                cat_descs        = request.POST.getlist("cat_desc[]")
+                cat_amounts      = request.POST.getlist("cat_amount[]")
+                cat_billable     = set(request.POST.getlist("cat_billable[]"))  # contains row indices (as strings)
+                cat_customer_ids = request.POST.getlist("cat_customer[]")
+                cat_class_ids    = request.POST.getlist("cat_class[]")
+
+                for idx, acc_id in enumerate(cat_category_ids):
+                    if not acc_id:
+                        continue
+                    category = Account.objects.filter(pk=acc_id).first()
+                    if not category:
+                        continue
+
+                    amt = _dec(cat_amounts[idx])
+                    if amt == 0:
+                        continue
+
+                    is_bill = str(idx) in cat_billable
+                    customer = Newcustomer.objects.filter(pk=cat_customer_ids[idx] or None).first()
+                    klass    = Pclass.objects.filter(pk=cat_class_ids[idx] or None).first()
 
                     BillCategoryLine.objects.create(
-                        bill=bill,
-                        account=account_obj,
-                        account_text=account_val if not account_obj else '',
-                        description=(row.get('description') or '').strip(),
-                        amount=Decimal(str(row.get('amount') or 0)),
-                        billable=bool(row.get('billable')),
-                        customer_project=(row.get('customer_project') or '').strip(),
-                        class_name=(row.get('class_name') or '').strip(),
-                        order_index=i
+                        bill=bill, category=category,
+                        description=cat_descs[idx],
+                        amount=amt, is_billable=is_bill,
+                        customer=customer, class_field=klass
                     )
+                    total += amt
 
-                # Item lines
-                item_json = request.POST.get('item_rows_json') or '[]'
-                item_rows = json.loads(item_json)
-                for i, row in enumerate(item_rows, start=1):
-                    qty = Decimal(str(row.get('qty') or 0))
-                    rate = Decimal(str(row.get('rate') or 0))
-                    amt = Decimal(str(row.get('amount') or (qty * rate)))
+                # -------- Item lines --------
+                item_product_ids = request.POST.getlist("item_product[]")
+                item_descs       = request.POST.getlist("item_desc[]")
+                item_qtys        = request.POST.getlist("item_qty[]")
+                item_rates       = request.POST.getlist("item_rate[]")
+                item_amounts     = request.POST.getlist("item_amount[]")
+                item_billable    = set(request.POST.getlist("item_billable[]"))
+                item_customer_ids= request.POST.getlist("item_customer[]")
+                item_class_ids   = request.POST.getlist("item_class[]")
+
+                for idx, prod_id in enumerate(item_product_ids):
+                    if not prod_id:
+                        continue
+                    product = Product.objects.filter(pk=prod_id).first()
+                    if not product:
+                        continue
+
+                    qty  = _dec(item_qtys[idx], "0")
+                    rate = _dec(item_rates[idx], "0")
+                    amt  = _dec(item_amounts[idx]) or (qty * rate)
+
+                    is_bill = str(idx) in item_billable
+                    customer = Newcustomer.objects.filter(pk=item_customer_ids[idx] or None).first()
+                    klass    = Pclass.objects.filter(pk=item_class_ids[idx] or None).first()
+
                     BillItemLine.objects.create(
-                        bill=bill,
-                        product_service=(row.get('product_service') or '').strip(),
-                        description=(row.get('description') or '').strip(),
-                        qty=qty,
-                        rate=rate,
-                        amount=amt,
-                        billable=bool(row.get('billable')),
-                        customer_project=(row.get('customer_project') or '').strip(),
-                        class_name=(row.get('class_name') or '').strip(),
-                        order_index=i
+                        bill=bill, product=product,
+                        description=item_descs[idx],
+                        qty=qty, rate=rate, amount=amt,
+                        is_billable=is_bill, customer=customer, class_field=klass
                     )
+                    total += amt
 
-            save_action = request.POST.get('save_action', 'save')
-            if save_action == 'save':
-                return redirect('expenses:bill-create')
-            if save_action == 'save&new':
-                return redirect('expenses:bill-create')
-            if save_action == 'save&close':
-                return redirect('expenses:bills_list')  # make sure this route exists
-        return redirect('expenses:bill-create')
+                bill.total_amount = total
+                bill.save(update_fields=["total_amount"])
+
+                action = request.POST.get("save_action") or "save"
+                if action == "save&new":
+                    return redirect("expenses:expenses")
+                if action == "save&new":
+                    return redirect("expenses:add-bill")
+                # adjust to your list route
+                return redirect("expenses:expenses")
+
+        except Exception as e:
+            messages.error(request, f"Could not save bill: {e}")
 
     # GET
     context = {
-        'suppliers': Newsupplier.objects.all().order_by('company_name'),
-        # If you later swap the Category column to a dropdown, pass accounts here too
-        'accounts': Account.objects.all().order_by('account_name')[:50],
+        "accounts": Account.objects.all().order_by("account_name"),
+        "expense_accounts": Account.objects.filter(
+            account_type__in=["EXPENSE", "OTHER_EXPENSE", "COST_OF_SALES", "Expense", "Other Expenses", "Cost of Sales"]
+        ).order_by("account_name"),
+        "products": Product.objects.all().order_by("name"),
+        "customers": Newcustomer.objects.all().order_by("customer_name"),
+        "suppliers": Newsupplier.objects.all().order_by("company_name"),
+        "classes": Pclass.objects.all().order_by("class_name"),
+        "generated_bill_no": generate_unique_bill_no(),  # prefill UI
     }
-    return render(request, 'bill_form.html', context)
+    return render(request, "bill_form.html", context)
 
 # end
 
