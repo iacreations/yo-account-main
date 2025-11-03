@@ -192,3 +192,44 @@ class BillItemLine(models.Model):
 
     def __str__(self):
         return f"{self.product} x{self.qty} @ {self.rate} = {self.amount}"
+# cheque model
+class Cheque(models.Model):
+    payee_name      = models.CharField(max_length=255, blank=True)
+    payee_supplier  = models.ForeignKey(Newsupplier, null=True, blank=True, on_delete=models.CASCADE)
+    bank_account    = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="cheque_payments")
+    mailing_address = models.CharField(max_length=255, blank=True)
+    payment_date    = models.DateField(default=timezone.localdate)
+    cheque_no       = models.CharField(max_length=20, unique=True)
+    location        = models.CharField(max_length=120, blank=True)
+    memo            = models.TextField(blank=True)
+    attachments     = models.FileField(upload_to="attachments/", null=True, blank=True)
+
+    total_amount    = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    created_at      = models.DateTimeField(auto_now_add=True)
+    updated_at      = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-payment_date", "-id")
+
+    def __str__(self):
+        return f"Cheque #{self.cheque_no}"
+
+class ChequeCategoryLine(models.Model):
+    cheque      = models.ForeignKey(Cheque, related_name="category_lines", on_delete=models.CASCADE)
+    category    = models.ForeignKey(Account, on_delete=models.CASCADE)
+    description = models.CharField(max_length=255, blank=True)
+    amount      = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    is_billable = models.BooleanField(default=False)
+    customer    = models.ForeignKey(Newcustomer, null=True, blank=True, on_delete=models.CASCADE)
+    class_field = models.ForeignKey(Pclass, null=True, blank=True, on_delete=models.CASCADE)
+
+class ChequeItemLine(models.Model):
+    cheque      = models.ForeignKey(Cheque, related_name="item_lines", on_delete=models.CASCADE)
+    product     = models.ForeignKey(Product, on_delete=models.CASCADE)
+    description = models.CharField(max_length=255, blank=True)
+    qty         = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0"))
+    rate        = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    amount      = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    is_billable = models.BooleanField(default=False)
+    customer    = models.ForeignKey(Newcustomer, null=True, blank=True, on_delete=models.CASCADE)
+    class_field = models.ForeignKey(Pclass, null=True, blank=True, on_delete=models.CASCADE)

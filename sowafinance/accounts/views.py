@@ -316,7 +316,6 @@ EQUITY_TYPES  = {"equity"}
 
 
 def _period(request):
-    """Same helper you used in TB: returns (from_date, to_date) as date objects or None."""
     dfrom = request.GET.get("from") or None
     dto   = request.GET.get("to") or None
     from datetime import datetime
@@ -329,10 +328,6 @@ def _period(request):
 
 
 def _apply_asof(qs, asof):
-    """
-    Apply 'as of' (<=) filter to JournalLine queryset, detecting the correct
-    date field on related JournalEntry (entry_date vs date).
-    """
     if not asof:
         return qs
     EntryModel = qs.model._meta.get_field("entry").remote_field.model
@@ -345,7 +340,6 @@ def _apply_asof(qs, asof):
 
 
 def _iregex_from_types(type_set):
-    # safe regex like  r"accounts\ receivable|current\ asset|equity"
     return "|".join(re.escape(t) for t in type_set)
 
 
@@ -370,32 +364,54 @@ def _net_by_types(lines, type_set, positive_is_debit=True):
     for rec in agg:
         bal = rec["deb"] - rec["cre"]           # debit-nature balance
         amt = bal if positive_is_debit else -bal
+        if abs(amt) < Decimal("0.005"):
+            continue
         rows.append((rec["account__account_name"], amt))
         total += amt
     return rows, total
 
 
+def _apply_cash_basis_rules(asset_types, liab_types):
+    """
+    Very light cash-basis tweak: remove A/R and A/P buckets so they zero out.
+    (QBO also affects other areas; refine here later if needed.)
+    """
+    aset = set(asset_types)
+    liab = set(liab_types)
+    aset -= {"accounts receivable"}
+    liab -= {"accounts payable"}
+    return aset, liab
+
+
 def report_bs(request):
     """
-    Balance Sheet (as of date in ?to=YYYY-MM-DD).
-    Sections:
-      - Assets
-      - Liabilities
-      - Equity (including retained earnings = cumulative net income)
+    Balance Sheet (vertical, QBO-like).
+    GET params:
+      ?to=YYYY-MM-DD   -> 'As of' date
+      ?method=cash|accrual  -> accounting method toggle
     """
-    _, asof = _period(request)  # we only care about 'to' for B/S
+    _, asof = _period(request)  # we only care about 'to'
+    method = (request.GET.get("method") or "accrual").strip().lower()
+    method = "cash" if method == "cash" else "accrual"
+
+    # Journal lines up to 'as of'
     lines = _apply_asof(
         JournalLine.objects.select_related("account", "entry"),
         asof
     )
 
+    # Cash-basis simplification: zero AR/AP by excluding those types
+    asset_types = ASSET_TYPES
+    liab_types  = LIAB_TYPES
+    if method == "cash":
+        asset_types, liab_types = _apply_cash_basis_rules(ASSET_TYPES, LIAB_TYPES)
+
     # Buckets
-    asset_rows, asset_total = _net_by_types(lines, ASSET_TYPES,  positive_is_debit=True)
-    liab_rows,  liab_total  = _net_by_types(lines, LIAB_TYPES,   positive_is_debit=False)
+    asset_rows, asset_total = _net_by_types(lines, asset_types,  positive_is_debit=True)
+    liab_rows,  liab_total  = _net_by_types(lines, liab_types,   positive_is_debit=False)
     eq_rows,    eq_total    = _net_by_types(lines, EQUITY_TYPES, positive_is_debit=False)
 
     # Retained earnings = cumulative net income up to 'as of'
-    # Income (credits-debits) positive; Expenses (debits-credits) positive
     inc_pattern = _iregex_from_types(INCOME_TYPES)
     exp_pattern = _iregex_from_types(EXPENSE_TYPES)
 
@@ -412,7 +428,12 @@ def report_bs(request):
     eq_rows.append(("Retained Earnings", retained))
     eq_total = eq_total + retained
 
+    # Company name (adjust to your source if you have one)
+    company_name = getattr(getattr(request, "tenant", None), "name", "YoAccountant")
+
     return render(request, "balance_sheet.html", {
+        "company_name": company_name,
+        "method": method,
         "asset_rows": asset_rows, "asset_total": asset_total,
         "liab_rows": liab_rows,   "liab_total": liab_total,
         "eq_rows": eq_rows,       "eq_total": eq_total,

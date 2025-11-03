@@ -43,132 +43,216 @@
   </style>
 </head>
 <body>
+  <a href="{% url 'expenses:expenses' %}" class="btn btn-lg" style="color: #39B54B;">← Back to Expense lists</a>
+
   <div class="container">
     <h2 class="title">Cheque Form</h2>
 
-    <!-- Top Fields -->
-    <div class="section-wrapper">
-      <div class="form-grid">
-        <div class="form-group"><label>Payee</label><select><option>Choose a payee</option></select></div>
-        <div class="form-group"><label>Bank Account</label><select><option>1000 - Cash & Cash Equivalents</option></select></div>
-        <div class="form-group"><label>Balance</label><input type="text" /></div>
-        <div class="form-group"><label>Mailing Address</label><input type="text" /></div>
-        <div class="form-group"><label>Payment Date</label><input type="date" /></div>
-        <div class="form-group"><label>Cheque No.</label><input type="text" value="1" /></div>
-        <div class="form-group"><label>Location</label><select><option>Select location</option></select></div>
-      </div>
-    </div>
+    <form method="post" enctype="multipart/form-data" action="{% url 'expenses:add-cheque' %}">
+      {% csrf_token %}
 
-    <!-- Category Details -->
-    <div class="section-wrapper">
-      <button class="collapsible">Category Details</button>
-      <div class="content">
-        <div class="table-responsive">
-          <table id="categoryTable">
-            <thead>
-              <tr><th>#</th><th>Category</th><th>Description</th><th>Amount</th><th>Billable</th><th>Customer / Project</th><th>Class</th><th>Operations</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="actions">
-          <button class="btn-light-green" onclick="addCategoryRow()">Add Line</button>
-          <button class="btn-light-green" onclick="clearCategoryTable()">Clear All</button>
-        </div>
-      </div>
-    </div>
+      <!-- Top Fields -->
+      <div class="section-wrapper">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Payee</label>
+            <select name="payee_supplier">
+              <option value="">— Choose supplier —</option>
+              {% for s in suppliers %}
+                <option value="{{ s.id }}">{{ s.company_name }}</option>
+              {% endfor %}
+            </select>
+            <small>Or enter name:</small>
+            <input type="text" name="payee_name" placeholder="Free text (optional)">
+          </div>
 
-    <!-- Item Details -->
-    <div class="section-wrapper">
-      <button class="collapsible">Item Details</button>
-      <div class="content">
-        <div class="table-responsive">
-          <table id="itemTable">
-            <thead>
-              <tr><th>#</th><th>Product / Service</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Billable</th><th>Customer / Project</th><th>Class</th><th>Operations</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="actions">
-          <button class="btn-light-green" onclick="addItemRow()">Add Line</button>
-          <button class="btn-light-green" onclick="clearItemTable()">Clear All</button>
-        </div>
-      </div>
-    </div>
+          <div class="form-group">
+            <label>Bank Account</label>
+             <select name="bank_account" required>
+              {% for acc in bank_accounts %}
+              <option value="{{ acc.id }}">{{ acc.account_name }}</option>
+              {% endfor %}
+              </select>
+            </div>
 
-    <!-- Memo -->
-    <div class="form-group" style="margin-bottom: 30px;">
-      <label>Memo</label>
-      <textarea rows="3" style="width:100%"></textarea>
-    </div>
+          <div class="form-group">
+            <label>Mailing Address</label>
+            <input type="text" name="mailing_address" />
+          </div>
 
-    <!-- Attachments -->
-    <div class="attachments">
-      {% if customer.attachments %}
-       <p>Existing file: <a href="" target="_blank">Download</a></p>
-      {% endif %}
-      <input type="file" multiple />
-      <i class='bx bx-upload' style="font-size: 30px;"></i>
-      <p>Drag/Drop files here or click to upload (Max size: 20MB)</p>
-    </div>
+          <div class="form-group">
+            <label>Payment Date</label>
+            <input type="date" name="payment_date" value="{{ today|date:'Y-m-d' }}">
+          </div>
 
-    <!-- Footer Buttons -->
-    <div class="footer">
-      <a href="{% url 'sowaf:expenses' %}" class="btn btn-green" style="text-decoration:none;">Cancel</a>
-      <div class="dropdown">
-          <button type="button" class="btn btn-green">Save ▼</button>
-          <div class="dropdown-menu">
-            <button type="submit" name="save_action" style="font-size: 1em;" value="save">Save</button>
-            <button type="submit" name="save_action" style="font-size: 1em;" value="save&new">Save & New</button>
-            <button type="submit" name="save_action" style="font-size: 1em;" value="save&close">Save & Close</button>
+          <div class="form-group">
+            <label>Cheque No.</label>
+            <input type="text" name="cheque_no" value="{{ generated_cheque_no }}" readonly style="color: #39B54B; font-weight: 700;">
+          </div>
+
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" name="location">
           </div>
         </div>
-    </div>
+      </div>
+
+      <!-- Category Details -->
+      <div class="section-wrapper">
+        <button class="collapsible" type="button">Category Details</button>
+        <div class="content">
+          <div class="table-responsive">
+            <table id="categoryTable">
+              <thead>
+                <tr><th>#</th><th>Category</th><th>Description</th><th>Amount</th><th>Billable</th><th>Customer / Project</th><th>Class</th><th>Operations</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="actions">
+            <button class="btn-light-green" type="button" onclick="addCategoryRow()">Add Line</button>
+            <button class="btn-light-green" type="button" onclick="clearCategoryTable()">Clear All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item Details -->
+      <div class="section-wrapper">
+        <button class="collapsible" type="button">Item Details</button>
+        <div class="content">
+          <div class="table-responsive">
+            <table id="itemTable">
+              <thead>
+                <tr><th>#</th><th>Product / Service</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Billable</th><th>Customer / Project</th><th>Class</th><th>Operations</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="actions">
+            <button class="btn-light-green" type="button" onclick="addItemRow()">Add Line</button>
+            <button class="btn-light-green" type="button" onclick="clearItemTable()">Clear All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Memo -->
+      <div class="form-group" style="margin-bottom: 30px;">
+        <label>Memo</label>
+        <textarea rows="3" style="width:100%" name="memo"></textarea>
+      </div>
+
+      <!-- Attachments -->
+      <div class="attachments">
+        <input type="file" name="attachments" multiple />
+        <i class='bx bx-upload' style="font-size: 30px;"></i>
+        <p>Drag/Drop files here or click to upload (Max size: 20MB)</p>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="footer">
+        <a href="{% url 'expenses:expenses' %}" class="btn btn-cancel">Cancel</a>
+        <div class="dropdown">
+          <button type="button" class="btn btn-green">Save ▼</button>
+          <div class="dropdown-menu">
+            <button type="submit" name="save_action" value="save">Save</button>
+            <button type="submit" name="save_action" value="save&new">Save & New</button>
+            <button type="submit" name="save_action" value="save&close">Save & Close</button>
+          </div>
+        </div>
+      </div>
+    </form>
   </div>
-<script src=" {% static 'sowaf/styles/script.js' %} "></script>
+
   <script>
     document.querySelectorAll(".collapsible").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const content = btn.nextElementSibling;
-        content.classList.toggle("active");
-      });
+      btn.addEventListener("click", () => btn.nextElementSibling.classList.toggle("active"));
     });
 
     function addCategoryRow() {
-      const table = document.querySelector("#categoryTable tbody");
-      const row = table.insertRow();
-      row.innerHTML = `<td></td><td><input type='text' /></td><td><input type='text' /></td><td><input type='number' /></td><td><input type='checkbox' /></td><td><input type='text' /></td><td><input type='text' /></td><td><button class='delete-btn' onclick='deleteRow(this)'><i class='bx bx-trash'></i></button></td>`;
-      updateRowNumbers(table);
+      const tbody = document.querySelector("#categoryTable tbody");
+      const tr = tbody.insertRow();
+      tr.innerHTML = `
+        <td></td>
+        <td>
+          <select name="cat_category[]">
+            <option value="">-- Select --</option>
+            {% for acc in expense_accounts %}
+              <option value="{{ acc.id }}">{{ acc.account_name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><input type="text" name="cat_desc[]"/></td>
+        <td><input type="number" step="0.01" name="cat_amount[]"/></td>
+        <td><input type="checkbox" name="cat_billable[]" value="0"/></td>
+        <td>
+          <select name="cat_customer[]">
+            <option value="">-- Customer/Project --</option>
+            {% for c in customers %}
+              <option value="{{ c.id }}">{{ c.customer_name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td>
+          <select name="cat_class[]">
+            <option value="">-- Class --</option>
+            {% for cl in classes %}
+              <option value="{{ cl.id }}">{{ cl.class_name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><button class="delete-btn" type="button" onclick="deleteRow(this)"><i class='bx bx-trash'></i></button></td>
+      `;
+      renumber(tbody);
     }
-
-    function clearCategoryTable() {
-      document.querySelector("#categoryTable tbody").innerHTML = "";
-    }
+    function clearCategoryTable(){ document.querySelector("#categoryTable tbody").innerHTML=""; }
 
     function addItemRow() {
-      const table = document.querySelector("#itemTable tbody");
-      const row = table.insertRow();
-      row.innerHTML = `<td></td><td><input type='text' /></td><td><input type='text' /></td><td><input type='number' /></td><td><input type='number' /></td><td><input type='number' readonly /></td><td><input type='checkbox' /></td><td><input type='text' /></td><td><input type='text' /></td><td><button class='delete-btn' onclick='deleteRow(this)'><i class='bx bx-trash'></i></button></td>`;
-      updateRowNumbers(table);
+      const tbody = document.querySelector("#itemTable tbody");
+      const tr = tbody.insertRow();
+      tr.innerHTML = `
+        <td></td>
+        <td>
+          <select name="item_product[]">
+            <option value="">-- Select --</option>
+            {% for p in products %}
+              <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><input type="text" name="item_desc[]"/></td>
+        <td><input type="number" step="0.01" name="item_qty[]"/></td>
+        <td><input type="number" step="0.01" name="item_rate[]"/></td>
+        <td><input type="number" step="0.01" name="item_amount[]"/></td>
+        <td><input type="checkbox" name="item_billable[]" value="0"/></td>
+        <td>
+          <select name="item_customer[]">
+            <option value="">-- Customer/Project --</option>
+            {% for c in customers %}
+              <option value="{{ c.id }}">{{ c.customer_name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td>
+          <select name="item_class[]">
+            <option value="">-- Class --</option>
+            {% for cl in classes %}
+              <option value="{{ cl.id }}">{{ cl.class_name }}</option>
+            {% endfor %}
+          </select>
+        </td>
+        <td><button class="delete-btn" type="button" onclick="deleteRow(this)"><i class='bx bx-trash'></i></button></td>
+      `;
+      renumber(tbody);
     }
+    function clearItemTable(){ document.querySelector("#itemTable tbody").innerHTML=""; }
 
-    function clearItemTable() {
-      document.querySelector("#itemTable tbody").innerHTML = "";
+    function deleteRow(btn){
+      const tb = btn.closest("tbody");
+      btn.closest("tr").remove();
+      renumber(tb);
     }
-
-    function deleteRow(btn) {
-      const row = btn.closest("tr");
-      const table = row.closest("tbody");
-      row.remove();
-      updateRowNumbers(table);
-    }
-
-    function updateRowNumbers(tbody) {
-      const rows = tbody.querySelectorAll("tr");
-      rows.forEach((row, index) => {
-        row.cells[0].textContent = index + 1;
-      });
+    function renumber(tbody){
+      [...tbody.querySelectorAll("tr")].forEach((tr,i)=> tr.cells[0].textContent = i+1);
     }
   </script>
 </body>
