@@ -233,6 +233,22 @@
           <div class="menu_title menu_editor"></div>
           <!-- duplicate these li tag if you want to add or remove navlink only -->
           <!-- Start -->
+            <li class="item" >
+            <a href="{% url 'sowaf:clients' %}" class="nav_link" id="">
+              <span class="navlink_icon">
+                <i class='bx bx-body'></i>
+              </span>
+              <span class="navlink">Clients</span>
+            </a>
+          </li>
+          <li class="item">
+            <a href="{% url 'sowaf:customers' %}" class="nav_link">
+              <span class="navlink_icon">
+                <i class='bx bx-user-voice'></i>
+              </span>
+              <span class="navlink">Customers</span>
+            </a>
+          </li>
           <li class="item">
             <a href="{% url 'sowaf:suppliers' %}" class="nav_link">
               <span class="navlink_icon">
