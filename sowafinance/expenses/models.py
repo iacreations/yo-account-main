@@ -3,10 +3,10 @@ from decimal import Decimal
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
-from sowaf.models import Newcustomer, Newsupplier      # adjust if paths differ
-from accounts.models import Account                             # your COA model
-from inventory.models import Product                            # your Product model
-from inventory.models import Pclass
+from sowafinance.sowaf.models import Newcustomer, Newsupplier      # adjust if paths differ
+from sowafinance.accounts.models import Account                             # your COA model
+from sowafinance.inventory.models import Product, Pclass                           # your Product model
+
 # Create your models here.
 DEC = dict(max_digits=12, decimal_places=2)
 

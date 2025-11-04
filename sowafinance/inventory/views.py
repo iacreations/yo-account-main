@@ -17,12 +17,11 @@ import io
 import os
 from django.core.files import File
 from django.conf import settings
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from . models import Product,BundleItem,Category,Pclass
-from sowaf.models import Newsupplier
-from accounts.models import Account
-from sales.models import InvoiceItem
+from sowafinance.sowaf.models import Newsupplier
+from sowafinance.accounts.models import Account
+from sowafinance.sales.models import InvoiceItem
 
 # Create your views here.
 def _dec(v):

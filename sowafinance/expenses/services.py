@@ -3,8 +3,8 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import Account, JournalEntry, JournalLine
-from expenses.models import Bill
+from sowafinance.accounts.models import Account, JournalEntry, JournalLine
+from sowafinance.expenses.models import Bill
 
 UNCATEGORIZED_EXP_NAME = "Uncategorized Expense"
 

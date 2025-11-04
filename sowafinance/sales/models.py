@@ -4,9 +4,9 @@ from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
 from django.db.models import Sum
-from accounts.models import Account
-from sowaf.models import Newcustomer
-from inventory.models import Product,Pclass
+from sowafinance.accounts.models import Account
+from sowafinance.sowaf.models import Newcustomer
+from sowafinance.inventory.models import Product,Pclass
 # Create your models here.
 
 

@@ -1,6 +1,6 @@
 from django.db import models
-from accounts.models import Account
-from sowaf.models import Newsupplier
+from sowafinance.accounts.models import Account
+from sowafinance.sowaf.models import Newsupplier
 # Create your models here.
 # category table
 class Category(models.Model):

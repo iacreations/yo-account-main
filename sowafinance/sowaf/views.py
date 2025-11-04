@@ -28,7 +28,8 @@ from accounts.models import JournalEntry,JournalLine
 from sales.views import _invoice_analytics 
 from django.contrib.auth.decorators import login_required
 from sales.models import Newinvoice  
-from accounts.models import Account
+from sowafinance.accounts.models import Account
+from sowafinance.sowaf.models import Newcustomer, Newsupplier
 from . models import Newcustomer, Newsupplier,Newclient,Newemployee,Newasset
 
 # Create your views here.

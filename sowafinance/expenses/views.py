@@ -14,9 +14,9 @@ from django.core.paginator import Paginator
 from .models import Expense, ExpenseCategoryLine, ExpenseItemLine,ColumnPreference,Bill, BillCategoryLine, BillItemLine
 from .models import Cheque, ChequeCategoryLine, ChequeItemLine
 
-from sowaf.models import Newcustomer, Newsupplier
-from accounts.models import Account,JournalEntry
-from inventory.models import Product,Pclass
+from sowafinance.sowaf.models import Newcustomer, Newsupplier
+from sowafinance.accounts.models import Account,JournalEntry
+from sowafinance.inventory.models import Product,Pclass
 from .utils import generate_unique_ref_no
 from .services import post_expense_to_gl,post_bill_to_ledger,post_cheque_to_ledger
 

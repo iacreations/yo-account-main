@@ -19,12 +19,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Newinvoice,InvoiceItem,Product,Payment,PaymentInvoice,SalesReceipt,SalesReceiptLine
-from sowaf.models import Newcustomer
+from sowafinance.sowaf.models import Newcustomer
 from django.http import JsonResponse
 from django.db.models import Sum, F, Value
 from django.utils.dateparse import parse_date
-from inventory.models import Product,Pclass
-from accounts.models import Account
+from sowafinance.inventory.models import Product,Pclass
+from sowafinance.accounts.models import Account
 from .services import post_invoice, post_payment,post_sales_receipt, generate_unique_ref_no, parse_date_flexible, status_for_invoice, _payment_prefill_rows, _delete_existing_payment_journal_entries,_coerce_decimal, delete_sales_receipt_journal
 
 
