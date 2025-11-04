@@ -146,7 +146,7 @@ small{ color:var(--muted); }
   </div>
     </nav>
   {% include 'includes/sidebar.html' %}
-  <div class="form-container" id="container" style="margin-left: 20%; margin-top: 5%;">
+  <div class="form-container" id="container" style="margin-left: 19%; margin-top: 5%;">
     <h2>Add Customer</h2>
 
     <form method='post' action="{% if customer %}{% url 'sowaf:edit-customer' customer.id %}{% else %}{% url 'sowaf:add-customer' %}{% endif %}" enctype= 'multipart/form-data'>

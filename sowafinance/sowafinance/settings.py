@@ -1,21 +1,18 @@
 from pathlib import Path
 import os
+import dj_database_url
 from django.urls import reverse_lazy
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# creating environment variables for our system
 
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
-SECRET_KEY = 'django-insecure-84a7d0o69un#_p=n_ew2f8*tn(@y9=4-wu57mw)edc7u)t*&-f'
+DEBUG = os.environ.get("DEBUG", "False").lower()="true"
 
-DEBUG = True
-
-ALLOWED_HOSTS = [
-    'localhost',
-    '172.16.0.48',
-    '127.0.0.1',
-    '.app.github.dev',
-]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
+# end of environ variables
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.app.github.dev',
@@ -76,7 +73,10 @@ DATABASES = {
         'NAME': BASE_DIR / "db.sqlite3",
     }
 }
-
+# we can add the database too to the eviron variables
+# overriding the db
+database_url = os.environ.get("DATABASE_URL")
+DATABASES["default"] = dj_database_url.parse(database_url)
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
