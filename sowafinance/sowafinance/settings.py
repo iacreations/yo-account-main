@@ -28,12 +28,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'sowaf',
-    'sowaAuth',
-    'sales',
-    'expenses',
-    'inventory',
-    'accounts',
+    'sowafinance.sowaf',
+    'sowafinance.accounts',
+    'sowafinance.expenses',
+    'sowafinance.inventory',
+    'sowafinance.sales',
+    'sowafinance.sowaAuth', 
 ]
 
 MIDDLEWARE = [
@@ -46,7 +46,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'sowafinance.urls'
+# WSGI/URL settings (keep these with the full dotted path)
+ROOT_URLCONF = "sowafinance.sowafinance.urls"
 
 TEMPLATES = [
     {
@@ -63,8 +64,8 @@ TEMPLATES = [
         },
     },
 ]
-
-WSGI_APPLICATION = 'sowafinance.wsgi.application'
+# wsgi configuration
+WSGI_APPLICATION = "sowafinance.sowafinance.wsgi.application"
 
 # Database
 DATABASES = {
