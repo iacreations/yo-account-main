@@ -1,0 +1,1 @@
+web: gunicorn sowafinance.sowafinance.wsgi --workers 3
