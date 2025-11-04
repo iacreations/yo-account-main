@@ -101,6 +101,12 @@ small{ color:var(--muted); }
 @media (max-width: 600px){
   .form-container{ width: calc(100% - 24px); margin:16px auto; padding:16px; }
 }
+/* Laptops & small desktops */
+@media only screen and (min-width: 1024px) and (max-width: 1600px) {
+#main{
+  margin-top: 15%;
+}
+}
   </style>
 </head>
 <body>
@@ -141,7 +147,7 @@ small{ color:var(--muted); }
     </nav>
   {% include 'includes/sidebar.html' %}
   <div class="form-container" id="container" style="margin-left: 20%; margin-top: 5%;">
-    <h2>Customer Form</h2>
+    <h2>Add Customer</h2>
 
     <form method='post' action="{% if customer %}{% url 'sowaf:edit-customer' customer.id %}{% else %}{% url 'sowaf:add-customer' %}{% endif %}" enctype= 'multipart/form-data'>
 <!-- Logo Upload -->
