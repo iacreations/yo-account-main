@@ -19,15 +19,15 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 urlpatterns = [
-    path('', include('sowaAuth.urls')),  # login, register, otp, etc.
+    path('', include('sowafinance.sowaAuth.urls')),  # login, register, otp, etc.
     path('sowaAuth/', include('django.contrib.auth.urls')),
     # Nest all app URLs under 'sowaf/'
     path('sowaf/', include([
-        path('', include('sowaf.urls')),         # dashboard and home
-        path('sales/', include('sales.urls')),   # sales module
-        path('expenses/', include('expenses.urls')),  # expenses
-        path('accounts/', include('accounts.urls')),
-        path('inventory/', include('inventory.urls')),
+        path('', include('sowafinance.sowaf.urls')),         # dashboard and home
+        path('sales/', include('sowafinance.sales.urls')),   # sales module
+        path('expenses/', include('sowafinance.expenses.urls')),  # expenses
+        path('accounts/', include('sowafinance.accounts.urls')),
+        path('inventory/', include('sowafinance.inventory.urls')),
     ])),
     path('admin/', admin.site.urls),
 ]

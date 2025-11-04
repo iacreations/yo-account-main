@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     "sowafinance.expenses.apps.ExpensesConfig",
     "sowafinance.inventory.apps.InventoryConfig",
     "sowafinance.sales.apps.SalesConfig",
-    "sowafinance.sowaAuth.apps.SowaauthConfig",
+    "sowafinance.sowaAuth.apps.SowaAuthConfig",
 ]
 
 MIDDLEWARE = [
