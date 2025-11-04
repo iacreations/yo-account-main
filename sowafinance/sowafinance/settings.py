@@ -11,12 +11,14 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 DEBUG = os.environ.get("DEBUG", "False").lower()=="true"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.0").split(" ")
 # end of environ variables
 
 CSRF_TRUSTED_ORIGINS = [
     'https://*.app.github.dev',
     'https://localhost:8000',
+    "https://yo-accountant-app.onrender.com",
+    "https://*.onrender.com",
 ]
 
 # Application definition
@@ -74,10 +76,18 @@ DATABASES = {
         'NAME': BASE_DIR / "db.sqlite3",
     }
 }
-# we can add the database too to the eviron variables
-# overriding the db
-database_url = os.environ.get("DATABASE_URL")
-DATABASES["default"] = dj_database_url.parse(database_url)
+
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")  # Render sets this
+
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS += [RENDER_EXTERNAL_HOSTNAME, ".onrender.com"]
+else:
+    # fallback if RENDER_EXTERNAL_HOSTNAME isn't present
+    ALLOWED_HOSTS += ["yo-accountant-app.onrender.com", ".onrender.com"]
+
+# behind Render’s proxy (ensures request.is_secure(), redirects, etc.)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
