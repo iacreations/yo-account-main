@@ -1,1 +1,1 @@
-web: gunicorn sowafinance.sowafinance.wsgi --workers 3
+web: gunicorn sowafinance.sowafinance.wsgi:application --chdir sowafinance --workers 3
