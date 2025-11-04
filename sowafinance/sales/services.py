@@ -7,7 +7,7 @@ from datetime import datetime, date
 from django.db.models.functions import Coalesce, Cast
 import random
 from django.db.models import Q
-from accounts.models import Account, JournalEntry, JournalLine
+from sowafinance.accounts.models import Account, JournalEntry, JournalLine
 from .models import Payment, PaymentInvoice, SalesReceipt, SalesReceiptLine  # your sales models
 
 logger = logging.getLogger(__name__)

@@ -24,11 +24,10 @@ from decimal import Decimal
 from django.utils import timezone
 from django.db.models import Sum, F, Value
 from django.db.models.functions import Coalesce
-from accounts.models import JournalEntry,JournalLine
 from sales.views import _invoice_analytics 
 from django.contrib.auth.decorators import login_required
-from sales.models import Newinvoice  
-from sowafinance.accounts.models import Account
+from sowafinance.sales.models import Newinvoice  
+from sowafinance.accounts.models import Account,JournalEntry,JournalLine
 from sowafinance.sowaf.models import Newcustomer, Newsupplier
 from . models import Newcustomer, Newsupplier,Newclient,Newemployee,Newasset
 
