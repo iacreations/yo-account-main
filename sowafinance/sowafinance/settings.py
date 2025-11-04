@@ -28,12 +28,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'sowafinance.sowaf',
-    'sowafinance.accounts',
-    'sowafinance.expenses',
-    'sowafinance.inventory',
-    'sowafinance.sales',
-    'sowafinance.sowaAuth', 
+    "sowafinance.sowaf.apps.SowafConfig",
+    "sowafinance.accounts.apps.AccountsConfig",
+    "sowafinance.expenses.apps.ExpensesConfig",
+    "sowafinance.inventory.apps.InventoryConfig",
+    "sowafinance.sales.apps.SalesConfig",
+    "sowafinance.sowaAuth.apps.SowaauthConfig",
 ]
 
 MIDDLEWARE = [
